@@ -1,5 +1,5 @@
 import streamlit as st
-import google.generative_ai as genai
+import google.generativeai as genai
 from PIL import Image
 
 # 1. 페이지 설정

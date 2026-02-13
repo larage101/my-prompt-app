@@ -13,7 +13,7 @@ if api_key:
         
         # 모델 명칭을 models/ 경로를 포함하여 명확히 지정합니다.
         # 만약 1.5-flash가 계속 안 된다면 'gemini-1.5-pro'로 바꿔보세요.
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
         uploaded_file = st.file_uploader("이미지를 업로드하세요", type=['png', 'jpg', 'jpeg'])
 

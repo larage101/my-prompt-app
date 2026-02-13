@@ -15,66 +15,93 @@ st.set_page_config(page_title="Abyssal Prompt Sanctum", layout="centered")
 st.markdown("""
 <style>
 
-@import url('https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Cinzel:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@400;600&display=swap');
 
-html, body, [class*="css"]  {
-    background: radial-gradient(circle at top, #1a0000 0%, #0b0b0b 60%);
-    color: #e6e0d8;
-    font-family: 'Cinzel', serif;
+/* 전체 배경 */
+html, body, [class*="css"] {
+    background: linear-gradient(135deg, #1a001f, #2d0036, #3b004f);
+    color: #f8e6ff;
+    font-family: 'Poppins', sans-serif;
 }
 
+/* 상단 여백 조정 */
 .block-container {
-    padding-top: 1rem;
+    padding-top: 1.2rem;
 }
 
-.dark-title {
+/* 타이틀 (줄바꿈 허용 + 잘림 방지) */
+.eroge-title {
     text-align: center;
-    font-size: 32px;
-    font-family: 'Uncial Antiqua', cursive;
-    letter-spacing: 3px;
-    color: #d4c5a2;
-    text-shadow:
-        0 0 8px #990000,
-        0 0 20px #660000,
-        0 0 40px #330000;
-    margin-bottom: 25px;
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 600;
+    color: #ffccff;
+    white-space: normal;
+    word-break: keep-all;
+    text-shadow: 
+        0 0 10px #ff66ff,
+        0 0 20px #cc00ff;
+    margin-bottom: 20px;
 }
 
+/* 카드 스타일 */
 section.main > div {
-    background-color: rgba(20, 10, 10, 0.6);
+    background: rgba(255, 255, 255, 0.05);
     padding: 20px;
-    border-radius: 10px;
-    border: 1px solid #400000;
-    box-shadow: 0 0 25px rgba(120, 0, 0, 0.3);
+    border-radius: 18px;
+    border: 1px solid rgba(255, 150, 255, 0.3);
+    backdrop-filter: blur(12px);
 }
 
+/* 버튼 */
 .stButton>button {
-    background: linear-gradient(145deg, #220000, #330000);
-    color: #f0e6d2;
-    border: 1px solid #660000;
-    border-radius: 6px;
-    padding: 10px 18px;
-    font-weight: bold;
-    transition: all 0.3s ease;
+    background: linear-gradient(135deg, #ff66cc, #cc33ff);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-weight: 600;
+    transition: 0.3s;
 }
 
 .stButton>button:hover {
-    background: #550000;
-    color: #ffffff;
-    box-shadow: 0 0 15px #990000;
-    border: 1px solid #aa0000;
+    background: linear-gradient(135deg, #ff99ff, #dd55ff);
+    box-shadow: 0 0 20px #ff66ff;
+    transform: scale(1.05);
 }
 
+/* 슬라이더 색감 */
+.stSlider label {
+    color: #ffccff;
+}
+
+/* 코드 블록 */
 .stCodeBlock {
-    background-color: #120808 !important;
-    color: #e6d8c3 !important;
-    border: 1px solid #550000;
-    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: #ffe6ff !important;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 150, 255, 0.4);
+}
+
+/* 성공 메시지 */
+.stSuccess {
+    background-color: rgba(255, 100, 255, 0.1) !important;
+    border: 1px solid #ff66ff;
+    color: #ffd6ff !important;
+}
+
+/* 모바일 대응 */
+@media (max-width: 768px) {
+    .eroge-title {
+        font-size: 20px;
+    }
 }
 
 </style>
 
-<h1 class="dark-title">🕯 Abyssal Prompt Sanctum 🕯</h1>
+<h1 class="eroge-title">
+💗 SDXL & Grok Magical Prompt Atelier ✨
+</h1>
 """, unsafe_allow_html=True)
 
 st.write("SDK version:", pkg_resources.get_distribution("google-generativeai").version)

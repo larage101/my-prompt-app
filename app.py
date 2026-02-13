@@ -30,7 +30,7 @@ genai.configure(api_key=api_key)
 # 모델 설정 (중요: models/ 붙임)
 # -----------------------------
 try:
-    model = genai.GenerativeModel("models/gemini-1.5-flash")
+    model = genai.GenerativeModel("models/gemini-1.0-pro-vision")
 except Exception as e:
     st.error(f"모델 초기화 실패: {e}")
     st.stop()

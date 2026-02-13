@@ -7,8 +7,8 @@ import pkg_resources
 # -----------------------------
 # 기본 설정
 # -----------------------------
-st.set_page_config(page_title="Gemini Vision Test", layout="centered")
-st.title("📸 Gemini Vision Prompt Extractor")
+st.set_page_config(page_title="SDXL & Grok Prompt Extractor PRO", layout="centered")
+st.title("📸 SDXL & Grok 전용 프롬프트 추출기 PRO")
 
 st.write("SDK version:", pkg_resources.get_distribution("google-generativeai").version)
 
@@ -27,31 +27,29 @@ if not api_key:
 genai.configure(api_key=api_key)
 
 # -----------------------------
-# 사용 가능한 모델 찾기
+# 모델 고정
 # -----------------------------
-available_models = []
+MODEL_NAME = "models/gemini-2.5-flash"
+model = genai.GenerativeModel(MODEL_NAME)
 
-try:
-    for m in genai.list_models():
-        if "generateContent" in m.supported_generation_methods:
-            available_models.append(m.name)
+st.success(f"현재 사용 모델: {MODEL_NAME}")
 
-    if not available_models:
-        st.error("사용 가능한 generateContent 모델이 없습니다.")
-        st.stop()
+# -----------------------------
+# 🎛 Generation 옵션
+# -----------------------------
+st.sidebar.header("🎛 프롬프트 강도 설정")
 
-    st.success("사용 가능한 모델:")
-    for m in available_models:
-        st.write(m)
+temperature = st.sidebar.slider("Temperature (창의성)", 0.0, 1.5, 0.7, 0.1)
+top_p = st.sidebar.slider("Top-P (확률 다양성)", 0.1, 1.0, 0.9, 0.05)
+top_k = st.sidebar.slider("Top-K (단어 후보 범위)", 1, 100, 40, 1)
+max_tokens = st.sidebar.slider("Max Output Tokens (길이)", 100, 2048, 800, 50)
 
-    # 첫 번째 모델 자동 선택
-    model_name = available_models[0]
-    model = genai.GenerativeModel(model_name)
-    st.info(f"현재 사용 모델: {model_name}")
-
-except Exception as e:
-    st.error(f"모델 목록 조회 실패: {e}")
-    st.stop()
+generation_config = {
+    "temperature": temperature,
+    "top_p": top_p,
+    "top_k": top_k,
+    "max_output_tokens": max_tokens,
+}
 
 # -----------------------------
 # 이미지 업로드
@@ -69,23 +67,104 @@ if uploaded_file:
     image.save(img_byte_arr, format="PNG")
     img_bytes = img_byte_arr.getvalue()
 
-    if st.button("🚀 이미지 분석"):
-        with st.spinner("이미지 분석 중..."):
-            try:
-                response = model.generate_content(
-                    [
-                        {
-                            "role": "user",
-                            "parts": [
-                                "Describe this image in detailed English.",
-                                {"mime_type": "image/png", "data": img_bytes},
-                            ],
-                        }
-                    ]
-                )
+    st.write("---")
+    col1, col2 = st.columns(2)
 
-                st.subheader("📌 분석 결과")
-                st.write(response.text)
+    # ============================================================
+    # 🚀 SDXL 프롬프트 + 네거티브 자동 생성
+    # ============================================================
+    with col1:
+        if st.button("🚀 SDXL 프롬프트 생성"):
+            with st.spinner("SDXL 분석 중..."):
+                try:
+                    response = model.generate_content(
+                        [
+                            {
+                                "role": "user",
+                                "parts": [
+                                    "Analyze this image for SDXL image generation.\n"
+                                    "1. Generate a highly detailed positive prompt using comma-separated keywords.\n"
+                                    "2. Generate a professional SDXL negative prompt.\n"
+                                    "Format:\n"
+                                    "Positive Prompt:\n"
+                                    "...\n\n"
+                                    "Negative Prompt:\n"
+                                    "...",
+                                    {"mime_type": "image/png", "data": img_bytes},
+                                ],
+                            }
+                        ],
+                        generation_config=generation_config
+                    )
 
-            except Exception as e:
-                st.error(f"에러 발생: {e}")
+                    output_text = response.text
+
+                    st.subheader("🎨 SDXL Prompt Result")
+                    st.code(output_text)
+
+                    # 📋 복사 버튼
+                    st.download_button(
+                        label="📋 프롬프트 복사 (txt 다운로드)",
+                        data=output_text,
+                        file_name="sdxl_prompt.txt",
+                        mime="text/plain"
+                    )
+
+                    # 🎯 토큰 사용량
+                    if hasattr(response, "usage_metadata"):
+                        usage = response.usage_metadata
+                        st.info(
+                            f"Prompt Tokens: {usage.prompt_token_count} | "
+                            f"Output Tokens: {usage.candidates_token_count} | "
+                            f"Total: {usage.total_token_count}"
+                        )
+
+                except Exception as e:
+                    st.error(f"에러 발생: {e}")
+
+    # ============================================================
+    # 🧠 Grok 프롬프트 생성
+    # ============================================================
+    with col2:
+        if st.button("🧠 Grok 프롬프트 생성"):
+            with st.spinner("Grok 스타일 분석 중..."):
+                try:
+                    response = model.generate_content(
+                        [
+                            {
+                                "role": "user",
+                                "parts": [
+                                    "Analyze this image and describe it in vivid, expressive natural English.\n"
+                                    "Make it emotional, descriptive, and conversational.\n"
+                                    "No bullet points.",
+                                    {"mime_type": "image/png", "data": img_bytes},
+                                ],
+                            }
+                        ],
+                        generation_config=generation_config
+                    )
+
+                    output_text = response.text
+
+                    st.subheader("💬 Grok Prompt")
+                    st.code(output_text)
+
+                    # 📋 복사 버튼
+                    st.download_button(
+                        label="📋 프롬프트 복사 (txt 다운로드)",
+                        data=output_text,
+                        file_name="grok_prompt.txt",
+                        mime="text/plain"
+                    )
+
+                    # 🎯 토큰 사용량
+                    if hasattr(response, "usage_metadata"):
+                        usage = response.usage_metadata
+                        st.info(
+                            f"Prompt Tokens: {usage.prompt_token_count} | "
+                            f"Output Tokens: {usage.candidates_token_count} | "
+                            f"Total: {usage.total_token_count}"
+                        )
+
+                except Exception as e:
+                    st.error(f"에러 발생: {e}")

@@ -10,14 +10,14 @@ import pkg_resources
 st.set_page_config(page_title="프롬추출", layout="centered")
 
 # ============================================================
-# 💗 심플 에로게 감성 UI (타이틀 안 잘림)
+# UI 디자인 (모바일 대응)
 # ============================================================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;700&display=swap');
 
 html, body, [class*="css"] {
-    background: linear-gradient(135deg, #1a001f, #2d0036, #3b004f);
+    background: linear-gradient(135deg, #1a001f, #2b0033, #3b004f);
     color: #f8e6ff;
     font-family: 'Poppins', sans-serif;
 }
@@ -26,19 +26,17 @@ html, body, [class*="css"] {
     padding-top: 1rem;
 }
 
-/* 타이틀 */
 .simple-title {
     text-align: center;
-    font-size: 28px;
+    font-size: 26px;
     font-weight: 700;
     color: #ffccff;
     white-space: normal;
     word-break: keep-all;
     text-shadow: 0 0 15px #ff66ff;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
-/* 카드 */
 section.main > div {
     background: rgba(255, 255, 255, 0.05);
     padding: 20px;
@@ -47,7 +45,6 @@ section.main > div {
     backdrop-filter: blur(10px);
 }
 
-/* 버튼 */
 .stButton>button {
     background: linear-gradient(135deg, #ff66cc, #cc33ff);
     color: white;
@@ -76,7 +73,7 @@ section.main > div {
 # ============================================================
 # SDK 확인
 # ============================================================
-st.write("SDK version:", pkg_resources.get_distribution("google-generativeai").version)
+st.caption("SDK version: " + pkg_resources.get_distribution("google-generativeai").version)
 
 # ============================================================
 # API KEY
@@ -97,16 +94,12 @@ genai.configure(api_key=api_key)
 # ============================================================
 MODEL_NAME = "models/gemini-2.5-flash"
 model = genai.GenerativeModel(MODEL_NAME)
-
 st.success(f"현재 모델: {MODEL_NAME}")
 
 # ============================================================
 # 이미지 업로드
 # ============================================================
-uploaded_file = st.file_uploader(
-    "이미지를 업로드하세요",
-    type=["png", "jpg", "jpeg"]
-)
+uploaded_file = st.file_uploader("이미지를 업로드하세요", type=["png", "jpg", "jpeg"])
 
 if uploaded_file:
     image = Image.open(uploaded_file)
@@ -116,63 +109,87 @@ if uploaded_file:
     image.save(img_byte_arr, format="PNG")
     img_bytes = img_byte_arr.getvalue()
 
+    # ========================================================
+    # 🎨 스타일 선택
+    # ========================================================
+    style_mode = st.radio(
+        "🎨 스타일 선택",
+        ["🎨 애니", "✨ 반실사", "📷 실사", "💎 초고화질 실사"],
+        horizontal=True
+    )
+
     st.write("---")
     col1, col2 = st.columns(2)
 
     # ========================================================
-    # 🔥 SDXL (안정 세팅)
+    # 🔥 SDXL
     # ========================================================
-    sdxl_config = {
-        "temperature": 0.4,
-        "top_p": 0.9,
-        "top_k": 30,
-        "max_output_tokens": 900,
-    }
-
     with col1:
         if st.button("🔥 SDXL"):
+
+            if style_mode == "🎨 애니":
+                style_instruction = (
+                    "Analyze for anime-style SDXL. "
+                    "Focus on clean lineart, cel shading, vibrant colors."
+                )
+                config = {"temperature": 0.55, "top_p": 0.95, "top_k": 40, "max_output_tokens": 1100}
+
+            elif style_mode == "✨ 반실사":
+                style_instruction = (
+                    "Analyze for semi-realistic illustration. "
+                    "Balanced realism and stylization, soft shading."
+                )
+                config = {"temperature": 0.45, "top_p": 0.92, "top_k": 35, "max_output_tokens": 1000}
+
+            elif style_mode == "📷 실사":
+                style_instruction = (
+                    "Analyze for photorealistic SDXL. "
+                    "Realistic anatomy, natural lighting, DSLR lens detail."
+                )
+                config = {"temperature": 0.35, "top_p": 0.9, "top_k": 30, "max_output_tokens": 900}
+
+            else:
+                style_instruction = (
+                    "Analyze for ultra high-resolution photorealistic SDXL. "
+                    "Ultra detailed skin pores, cinematic RAW photo, 8k."
+                )
+                config = {"temperature": 0.3, "top_p": 0.88, "top_k": 25, "max_output_tokens": 1200}
+
             with st.spinner("SDXL 분석 중..."):
+
                 response = model.generate_content(
                     [{
                         "role": "user",
                         "parts": [
-                            "Analyze this image for SDXL.\n"
-                            "Generate:\n"
-                            "1. Positive Prompt (comma-separated, highly detailed)\n"
+                            style_instruction +
+                            "\nGenerate:\n"
+                            "1. Positive Prompt (comma-separated)\n"
                             "2. Professional Negative Prompt\n\n"
                             "Format:\nPositive Prompt:\n...\n\nNegative Prompt:\n...",
                             {"mime_type": "image/png", "data": img_bytes},
                         ],
                     }],
-                    generation_config=sdxl_config
+                    generation_config=config
                 )
 
                 output_text = response.text
                 st.code(output_text)
 
-                st.download_button(
-                    "📋 다운로드",
-                    output_text,
-                    file_name="sdxl_prompt.txt"
-                )
+                st.download_button("📋 다운로드", output_text, "sdxl_prompt.txt")
 
                 if hasattr(response, "usage_metadata"):
-                    u = response.usage_metadata
-                    st.info(f"Total Tokens: {u.total_token_count}")
+                    st.info(f"Total Tokens: {response.usage_metadata.total_token_count}")
 
     # ========================================================
-    # 💋 GROK (감성 세팅)
+    # 💋 GROK
     # ========================================================
-    grok_config = {
-        "temperature": 0.9,
-        "top_p": 0.95,
-        "top_k": 50,
-        "max_output_tokens": 1300,
-    }
-
     with col2:
         if st.button("💋 GROK"):
+
+            config = {"temperature": 0.9, "top_p": 0.95, "top_k": 50, "max_output_tokens": 1300}
+
             with st.spinner("Grok 감성 추출 중..."):
+
                 response = model.generate_content(
                     [{
                         "role": "user",
@@ -181,18 +198,13 @@ if uploaded_file:
                             {"mime_type": "image/png", "data": img_bytes},
                         ],
                     }],
-                    generation_config=grok_config
+                    generation_config=config
                 )
 
                 output_text = response.text
                 st.code(output_text)
 
-                st.download_button(
-                    "📋 다운로드",
-                    output_text,
-                    file_name="grok_prompt.txt"
-                )
+                st.download_button("📋 다운로드", output_text, "grok_prompt.txt")
 
                 if hasattr(response, "usage_metadata"):
-                    u = response.usage_metadata
-                    st.info(f"Total Tokens: {u.total_token_count}")
+                    st.info(f"Total Tokens: {response.usage_metadata.total_token_count}")

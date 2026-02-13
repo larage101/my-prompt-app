@@ -1,15 +1,16 @@
 import streamlit as st
-import pkg_resources
-
-st.write("SDK version:", pkg_resources.get_distribution("google-generativeai").version)
-
-import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 import io
+import pkg_resources
 
+# -----------------------------
+# 기본 설정
+# -----------------------------
 st.set_page_config(page_title="Custom Prompt Extractor", layout="centered")
 st.title("📸 SDXL & Grok 전용 프롬프트 추출기")
+
+st.write("SDK version:", pkg_resources.get_distribution("google-generativeai").version)
 
 # -----------------------------
 # API KEY 설정
@@ -26,10 +27,10 @@ if not api_key:
 genai.configure(api_key=api_key)
 
 # -----------------------------
-# 모델 설정 (안정 모델)
+# 모델 설정 (중요: models/ 붙임)
 # -----------------------------
 try:
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    model = genai.GenerativeModel("models/gemini-1.5-flash")
 except Exception as e:
     st.error(f"모델 초기화 실패: {e}")
     st.stop()
@@ -46,7 +47,7 @@ if uploaded_file:
     image = Image.open(uploaded_file)
     st.image(image, use_container_width=True)
 
-    # Gemini에 전달할 이미지 포맷 변환
+    # Gemini 전달용 이미지 변환
     img_byte_arr = io.BytesIO()
     image.save(img_byte_arr, format="PNG")
     img_bytes = img_byte_arr.getvalue()
@@ -63,10 +64,15 @@ if uploaded_file:
                 try:
                     response = model.generate_content(
                         [
-                            "Analyze this image for SDXL. "
-                            "Output descriptive keywords separated by commas. "
-                            "English only.",
-                            {"mime_type": "image/png", "data": img_bytes},
+                            {
+                                "role": "user",
+                                "parts": [
+                                    "Analyze this image for SDXL. "
+                                    "Output descriptive keywords separated by commas. "
+                                    "English only.",
+                                    {"mime_type": "image/png", "data": img_bytes},
+                                ],
+                            }
                         ]
                     )
                     st.subheader("SDXL Prompt")
@@ -83,10 +89,15 @@ if uploaded_file:
                 try:
                     response = model.generate_content(
                         [
-                            "Analyze this image for Grok AI. "
-                            "Use descriptive natural language. "
-                            "English only.",
-                            {"mime_type": "image/png", "data": img_bytes},
+                            {
+                                "role": "user",
+                                "parts": [
+                                    "Analyze this image for Grok AI. "
+                                    "Use descriptive natural language. "
+                                    "English only.",
+                                    {"mime_type": "image/png", "data": img_bytes},
+                                ],
+                            }
                         ]
                     )
                     st.subheader("Grok Prompt")

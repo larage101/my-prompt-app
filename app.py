@@ -8,7 +8,7 @@ import pkg_resources
 # 기본 설정
 # -----------------------------
 st.set_page_config(page_title="SDXL & Grok Prompt Extractor PRO", layout="centered")
-st.title("📸 SDXL & Grok 전용 프롬프트 추출기 PRO")
+st.title("📸 SDXL & Grok 프롬프트 추출기v1")
 
 st.write("SDK version:", pkg_resources.get_distribution("google-generativeai").version)
 

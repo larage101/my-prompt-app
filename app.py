@@ -1,4 +1,4 @@
-import google.generativeai as genai
+import streamlit as st
 import pkg_resources
 
 st.write("SDK version:", pkg_resources.get_distribution("google-generativeai").version)

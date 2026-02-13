@@ -7,8 +7,8 @@ import pkg_resources
 # -----------------------------
 # 기본 설정
 # -----------------------------
-st.set_page_config(page_title="Custom Prompt Extractor", layout="centered")
-st.title("📸 SDXL & Grok 전용 프롬프트 추출기")
+st.set_page_config(page_title="Gemini Vision Test", layout="centered")
+st.title("📸 Gemini Vision Prompt Extractor")
 
 st.write("SDK version:", pkg_resources.get_distribution("google-generativeai").version)
 
@@ -27,12 +27,30 @@ if not api_key:
 genai.configure(api_key=api_key)
 
 # -----------------------------
-# 모델 설정 (중요: models/ 붙임)
+# 사용 가능한 모델 찾기
 # -----------------------------
+available_models = []
+
 try:
-    model = genai.GenerativeModel("models/gemini-1.0-pro-vision")
+    for m in genai.list_models():
+        if "generateContent" in m.supported_generation_methods:
+            available_models.append(m.name)
+
+    if not available_models:
+        st.error("사용 가능한 generateContent 모델이 없습니다.")
+        st.stop()
+
+    st.success("사용 가능한 모델:")
+    for m in available_models:
+        st.write(m)
+
+    # 첫 번째 모델 자동 선택
+    model_name = available_models[0]
+    model = genai.GenerativeModel(model_name)
+    st.info(f"현재 사용 모델: {model_name}")
+
 except Exception as e:
-    st.error(f"모델 초기화 실패: {e}")
+    st.error(f"모델 목록 조회 실패: {e}")
     st.stop()
 
 # -----------------------------
@@ -47,60 +65,27 @@ if uploaded_file:
     image = Image.open(uploaded_file)
     st.image(image, use_container_width=True)
 
-    # Gemini 전달용 이미지 변환
     img_byte_arr = io.BytesIO()
     image.save(img_byte_arr, format="PNG")
     img_bytes = img_byte_arr.getvalue()
 
-    st.write("---")
-    col1, col2 = st.columns(2)
+    if st.button("🚀 이미지 분석"):
+        with st.spinner("이미지 분석 중..."):
+            try:
+                response = model.generate_content(
+                    [
+                        {
+                            "role": "user",
+                            "parts": [
+                                "Describe this image in detailed English.",
+                                {"mime_type": "image/png", "data": img_bytes},
+                            ],
+                        }
+                    ]
+                )
 
-    # -----------------------------
-    # SDXL 프롬프트 추출
-    # -----------------------------
-    with col1:
-        if st.button("🚀 SDXL 프롬프트 추출"):
-            with st.spinner("SDXL 스타일 분석 중..."):
-                try:
-                    response = model.generate_content(
-                        [
-                            {
-                                "role": "user",
-                                "parts": [
-                                    "Analyze this image for SDXL. "
-                                    "Output descriptive keywords separated by commas. "
-                                    "English only.",
-                                    {"mime_type": "image/png", "data": img_bytes},
-                                ],
-                            }
-                        ]
-                    )
-                    st.subheader("SDXL Prompt")
-                    st.code(response.text)
-                except Exception as e:
-                    st.error(f"에러 발생: {e}")
+                st.subheader("📌 분석 결과")
+                st.write(response.text)
 
-    # -----------------------------
-    # Grok 프롬프트 추출
-    # -----------------------------
-    with col2:
-        if st.button("🧠 Grok 프롬프트 추출"):
-            with st.spinner("Grok 스타일 분석 중..."):
-                try:
-                    response = model.generate_content(
-                        [
-                            {
-                                "role": "user",
-                                "parts": [
-                                    "Analyze this image for Grok AI. "
-                                    "Use descriptive natural language. "
-                                    "English only.",
-                                    {"mime_type": "image/png", "data": img_bytes},
-                                ],
-                            }
-                        ]
-                    )
-                    st.subheader("Grok Prompt")
-                    st.code(response.text)
-                except Exception as e:
-                    st.error(f"에러 발생: {e}")
+            except Exception as e:
+                st.error(f"에러 발생: {e}")

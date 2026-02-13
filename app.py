@@ -1,3 +1,8 @@
+import google.generativeai as genai
+import pkg_resources
+
+st.write("SDK version:", pkg_resources.get_distribution("google-generativeai").version)
+
 import streamlit as st
 import google.generativeai as genai
 from PIL import Image

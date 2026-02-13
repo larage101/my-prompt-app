@@ -4,17 +4,84 @@ from PIL import Image
 import io
 import pkg_resources
 
-# -----------------------------
-# 기본 설정
-# -----------------------------
-st.set_page_config(page_title="SDXL & Grok Prompt Extractor PRO", layout="centered")
-st.title("📸 SDXL & Grok 프롬프트 추출기v1")
+# ============================================================
+# 🕯 기본 설정
+# ============================================================
+st.set_page_config(page_title="Abyssal Prompt Sanctum", layout="centered")
+
+# ============================================================
+# 🖤 다크 판타지 UI
+# ============================================================
+st.markdown("""
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Cinzel:wght@400;700&display=swap');
+
+html, body, [class*="css"]  {
+    background: radial-gradient(circle at top, #1a0000 0%, #0b0b0b 60%);
+    color: #e6e0d8;
+    font-family: 'Cinzel', serif;
+}
+
+.block-container {
+    padding-top: 1rem;
+}
+
+.dark-title {
+    text-align: center;
+    font-size: 32px;
+    font-family: 'Uncial Antiqua', cursive;
+    letter-spacing: 3px;
+    color: #d4c5a2;
+    text-shadow:
+        0 0 8px #990000,
+        0 0 20px #660000,
+        0 0 40px #330000;
+    margin-bottom: 25px;
+}
+
+section.main > div {
+    background-color: rgba(20, 10, 10, 0.6);
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #400000;
+    box-shadow: 0 0 25px rgba(120, 0, 0, 0.3);
+}
+
+.stButton>button {
+    background: linear-gradient(145deg, #220000, #330000);
+    color: #f0e6d2;
+    border: 1px solid #660000;
+    border-radius: 6px;
+    padding: 10px 18px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.stButton>button:hover {
+    background: #550000;
+    color: #ffffff;
+    box-shadow: 0 0 15px #990000;
+    border: 1px solid #aa0000;
+}
+
+.stCodeBlock {
+    background-color: #120808 !important;
+    color: #e6d8c3 !important;
+    border: 1px solid #550000;
+    border-radius: 6px;
+}
+
+</style>
+
+<h1 class="dark-title">🕯 Abyssal Prompt Sanctum 🕯</h1>
+""", unsafe_allow_html=True)
 
 st.write("SDK version:", pkg_resources.get_distribution("google-generativeai").version)
 
-# -----------------------------
-# API KEY 설정
-# -----------------------------
+# ============================================================
+# 🔑 API KEY
+# ============================================================
 api_key = st.secrets.get("GEMINI_API_KEY")
 
 if not api_key:
@@ -26,23 +93,23 @@ if not api_key:
 
 genai.configure(api_key=api_key)
 
-# -----------------------------
-# 모델 고정
-# -----------------------------
+# ============================================================
+# 🔥 모델 고정
+# ============================================================
 MODEL_NAME = "models/gemini-2.5-flash"
 model = genai.GenerativeModel(MODEL_NAME)
 
 st.success(f"현재 사용 모델: {MODEL_NAME}")
 
-# -----------------------------
-# 🎛 Generation 옵션
-# -----------------------------
-st.sidebar.header("🎛 프롬프트 강도 설정")
+# ============================================================
+# 🎛 Generation 설정
+# ============================================================
+st.sidebar.header("🎛 Arcane Generation Controls")
 
-temperature = st.sidebar.slider("Temperature (창의성)", 0.0, 1.5, 0.7, 0.1)
-top_p = st.sidebar.slider("Top-P (확률 다양성)", 0.1, 1.0, 0.9, 0.05)
-top_k = st.sidebar.slider("Top-K (단어 후보 범위)", 1, 100, 40, 1)
-max_tokens = st.sidebar.slider("Max Output Tokens (길이)", 100, 2048, 800, 50)
+temperature = st.sidebar.slider("Temperature", 0.0, 1.5, 0.7, 0.1)
+top_p = st.sidebar.slider("Top-P", 0.1, 1.0, 0.9, 0.05)
+top_k = st.sidebar.slider("Top-K", 1, 100, 40, 1)
+max_tokens = st.sidebar.slider("Max Output Tokens", 100, 2048, 800, 50)
 
 generation_config = {
     "temperature": temperature,
@@ -51,9 +118,9 @@ generation_config = {
     "max_output_tokens": max_tokens,
 }
 
-# -----------------------------
-# 이미지 업로드
-# -----------------------------
+# ============================================================
+# 🖼 이미지 업로드
+# ============================================================
 uploaded_file = st.file_uploader(
     "이미지를 업로드하세요",
     type=["png", "jpg", "jpeg"]
@@ -70,99 +137,84 @@ if uploaded_file:
     st.write("---")
     col1, col2 = st.columns(2)
 
-    # ============================================================
-    # 🚀 SDXL 프롬프트 + 네거티브 자동 생성
-    # ============================================================
+    # ========================================================
+    # 🎨 SDXL
+    # ========================================================
     with col1:
-        if st.button("🚀 SDXL 프롬프트 생성"):
-            with st.spinner("SDXL 분석 중..."):
+        if st.button("🔥 SDXL Ritual"):
+            with st.spinner("Invoking SDXL Spirits..."):
                 try:
                     response = model.generate_content(
-                        [
-                            {
-                                "role": "user",
-                                "parts": [
-                                    "Analyze this image for SDXL image generation.\n"
-                                    "1. Generate a highly detailed positive prompt using comma-separated keywords.\n"
-                                    "2. Generate a professional SDXL negative prompt.\n"
-                                    "Format:\n"
-                                    "Positive Prompt:\n"
-                                    "...\n\n"
-                                    "Negative Prompt:\n"
-                                    "...",
-                                    {"mime_type": "image/png", "data": img_bytes},
-                                ],
-                            }
-                        ],
+                        [{
+                            "role": "user",
+                            "parts": [
+                                "Analyze this image for SDXL.\n"
+                                "Generate:\n"
+                                "1. Positive Prompt (comma-separated, highly detailed)\n"
+                                "2. Professional Negative Prompt\n\n"
+                                "Format:\n"
+                                "Positive Prompt:\n...\n\nNegative Prompt:\n...",
+                                {"mime_type": "image/png", "data": img_bytes},
+                            ],
+                        }],
                         generation_config=generation_config
                     )
 
                     output_text = response.text
-
-                    st.subheader("🎨 SDXL Prompt Result")
+                    st.subheader("🕯 SDXL Incantation")
                     st.code(output_text)
 
-                    # 📋 복사 버튼
                     st.download_button(
-                        label="📋 프롬프트 복사 (txt 다운로드)",
-                        data=output_text,
-                        file_name="sdxl_prompt.txt",
-                        mime="text/plain"
+                        "📋 Download Prompt",
+                        output_text,
+                        file_name="sdxl_prompt.txt"
                     )
 
-                    # 🎯 토큰 사용량
                     if hasattr(response, "usage_metadata"):
                         usage = response.usage_metadata
                         st.info(
-                            f"Prompt Tokens: {usage.prompt_token_count} | "
-                            f"Output Tokens: {usage.candidates_token_count} | "
+                            f"Prompt: {usage.prompt_token_count} | "
+                            f"Output: {usage.candidates_token_count} | "
                             f"Total: {usage.total_token_count}"
                         )
 
                 except Exception as e:
                     st.error(f"에러 발생: {e}")
 
-    # ============================================================
-    # 🧠 Grok 프롬프트 생성
-    # ============================================================
+    # ========================================================
+    # 🧠 GROK
+    # ========================================================
     with col2:
-        if st.button("🧠 Grok 프롬프트 생성"):
-            with st.spinner("Grok 스타일 분석 중..."):
+        if st.button("🩸 Grok Invocation"):
+            with st.spinner("Summoning Grok Essence..."):
                 try:
                     response = model.generate_content(
-                        [
-                            {
-                                "role": "user",
-                                "parts": [
-                                    "Analyze this image and describe it in vivid, expressive natural English.\n"
-                                    "Make it emotional, descriptive, and conversational.\n"
-                                    "No bullet points.",
-                                    {"mime_type": "image/png", "data": img_bytes},
-                                ],
-                            }
-                        ],
+                        [{
+                            "role": "user",
+                            "parts": [
+                                "Describe this image in vivid, emotional, natural English.\n"
+                                "Make it immersive and expressive.",
+                                {"mime_type": "image/png", "data": img_bytes},
+                            ],
+                        }],
                         generation_config=generation_config
                     )
 
                     output_text = response.text
-
-                    st.subheader("💬 Grok Prompt")
+                    st.subheader("🔮 Grok Manifestation")
                     st.code(output_text)
 
-                    # 📋 복사 버튼
                     st.download_button(
-                        label="📋 프롬프트 복사 (txt 다운로드)",
-                        data=output_text,
-                        file_name="grok_prompt.txt",
-                        mime="text/plain"
+                        "📋 Download Prompt",
+                        output_text,
+                        file_name="grok_prompt.txt"
                     )
 
-                    # 🎯 토큰 사용량
                     if hasattr(response, "usage_metadata"):
                         usage = response.usage_metadata
                         st.info(
-                            f"Prompt Tokens: {usage.prompt_token_count} | "
-                            f"Output Tokens: {usage.candidates_token_count} | "
+                            f"Prompt: {usage.prompt_token_count} | "
+                            f"Output: {usage.candidates_token_count} | "
                             f"Total: {usage.total_token_count}"
                         )
 

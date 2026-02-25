@@ -2,7 +2,6 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 import io
-import pkg_resources
 
 # ============================================================
 # 기본 설정
@@ -73,7 +72,6 @@ section.main > div {
 # ============================================================
 # SDK 확인
 # ============================================================
-st.caption("SDK version: " + pkg_resources.get_distribution("google-generativeai").version)
 
 # ============================================================
 # API KEY

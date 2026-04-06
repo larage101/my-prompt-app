@@ -54,7 +54,7 @@ genai.configure(api_key=api_key)
 # ============================================================
 # 모델 설정 (공식 지원 명칭인 2.0-flash로 수정)
 # ============================================================
-MODEL_NAME = "models/gemini-2.0-flash"
+MODEL_NAME = "gemini-2.0-flash-001"   # stable 버전
 model = genai.GenerativeModel(MODEL_NAME)
 st.success(f"현재 모델: {MODEL_NAME}")
 

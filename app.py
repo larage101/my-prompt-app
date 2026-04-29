@@ -171,7 +171,7 @@ Negative Prompt:
                         st.error(result2)
 
             except Exception as e:
-                st.error(f"에러: {e}")            }
+                st.error(f"에러: {e}")
 
             # 🔥 모델별 최적화
             if "gpt-4o-mini" in model_name:

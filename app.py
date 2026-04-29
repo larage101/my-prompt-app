@@ -33,28 +33,6 @@ if not api_key:
     st.stop()
 
 # ============================================================
-# 🤖 모델 선택
-# ============================================================
-model_option = st.selectbox(
-    "🤖 모델 선택",
-    [
-        "qwen/qwen2.5-vl-7b-instruct (가성비)",
-        "qwen/qwen-vl-chat (고성능)",
-        "openai/gpt-4o-mini (텍스트)"
-    ]
-)
-
-# 모델 매핑
-if "llava" in model_option:
-    model_name = "llava-hf/llava-1.5-7b-hf"
-elif "qwen" in model_option:
-    model_name = "qwen/qwen-vl-chat"
-else:
-    model_name = "openai/gpt-4o-mini"
-
-st.success(f"선택된 모델: {model_name}")
-
-# ============================================================
 # 이미지 업로드
 # ============================================================
 uploaded_file = st.file_uploader("이미지 업로드", type=["png", "jpg", "jpeg"])
@@ -80,8 +58,6 @@ if uploaded_file:
         horizontal=True
     )
 
-    base_prompt = "Analyze image and generate SDXL prompt."
-
     if style_mode == "애니":
         style_prompt = "anime style, clean lineart, vibrant colors"
     elif style_mode == "반실사":
@@ -91,16 +67,111 @@ if uploaded_file:
     else:
         style_prompt = "ultra realistic 8k RAW, skin detail"
 
+    # 🔥 고품질 프롬프트 지시문
+    base_prompt = f"""
+Analyze this image in detail and create a high-quality Stable Diffusion (SDXL) prompt.
+
+Focus on:
+- subject and appearance
+- pose and composition
+- lighting and shadows
+- camera angle and lens
+- textures and materials
+- background and environment
+
+Style: {style_prompt}
+
+Return ONLY in this format:
+
+Positive Prompt:
+...
+
+Negative Prompt:
+...
+"""
+
     # ========================================================
     # 🔥 프롬프트 생성
     # ========================================================
     if st.button("🔥 생성"):
-        with st.spinner("분석 중..."):
+        with st.spinner("분석 중... (무료라 느릴 수 있음)"):
 
             headers = {
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json"
             }
+
+            # ✅ 1순위: Nemotron (무료 멀티모달)
+            payload = {
+                "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": base_prompt},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{img_b64}"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+
+            try:
+                res = requests.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers=headers,
+                    json=payload,
+                    timeout=90
+                )
+
+                result = res.json()
+
+                # ====================================================
+                # ✅ 정상 응답
+                # ====================================================
+                if "choices" in result:
+                    output_text = result["choices"][0]["message"]["content"]
+
+                    st.code(output_text)
+                    st.download_button("📋 다운로드", output_text, "prompt.txt")
+
+                # ====================================================
+                # ⚠️ 실패 → fallback (텍스트 모델)
+                # ====================================================
+                else:
+                    st.warning("무료 모델 실패 → fallback 실행")
+
+                    fallback_payload = {
+                        "model": "openai/gpt-4o-mini",
+                        "messages": [
+                            {
+                                "role": "user",
+                                "content": base_prompt
+                            }
+                        ]
+                    }
+
+                    res2 = requests.post(
+                        "https://openrouter.ai/api/v1/chat/completions",
+                        headers=headers,
+                        json=fallback_payload,
+                        timeout=60
+                    )
+
+                    result2 = res2.json()
+
+                    if "choices" in result2:
+                        output_text = result2["choices"][0]["message"]["content"]
+                        st.code(output_text)
+                    else:
+                        st.error(result2)
+
+            except Exception as e:
+                st.error(f"에러: {e}")            }
 
             # 🔥 모델별 최적화
             if "gpt-4o-mini" in model_name:

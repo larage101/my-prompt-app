@@ -49,6 +49,21 @@ if uploaded_file:
     image.save(buffer, format="JPEG", quality=85)
     img_b64 = base64.b64encode(buffer.getvalue()).decode()
 
+    person_type = st.selectbox(
+    "👤 인물",
+    ["없음", "성인 여성", "성인 남성", "아이"]
+    )
+
+    background = st.selectbox(
+    "🌍 배경",
+    ["실내", "야외", "봄", "여름", "가을", "겨울", "낮", "밤"]
+    )
+
+    mood = st.selectbox(
+    "🎭 분위기",
+    ["자연광", "시네마틱", "부드러운", "강한 대비", "몽환적"]
+    )
+    
     # ========================================================
     # 🎨 스타일 선택
     # ========================================================
@@ -71,6 +86,11 @@ if uploaded_file:
     base_prompt = f"""
 Analyze this image in detail and create a high-quality Stable Diffusion (SDXL) prompt.
 
+Context:
+- Person: {person_type}
+- Background: {background}
+- Mood: {mood}
+
 Focus on:
 - subject and appearance
 - pose and composition
@@ -78,8 +98,6 @@ Focus on:
 - camera angle and lens
 - textures and materials
 - background and environment
-
-Style: {style_prompt}
 
 Return ONLY in this format:
 

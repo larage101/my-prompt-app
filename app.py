@@ -3,6 +3,7 @@ from PIL import Image
 import io
 import requests
 import base64
+import streamlit.components.v1 as components
 
 # ============================================================
 # 기본 설정
@@ -33,6 +34,17 @@ if not api_key:
     st.stop()
 
 # ============================================================
+# 복사 버튼 함수
+# ============================================================
+def copy_button(text, label="복사"):
+    safe_text = text.replace("`", "\\`")
+    components.html(f"""
+        <button onclick="navigator.clipboard.writeText(`{safe_text}`)">
+            📋 {label}
+        </button>
+    """, height=40)
+
+# ============================================================
 # 이미지 업로드
 # ============================================================
 uploaded_file = st.file_uploader("이미지 업로드", type=["png", "jpg", "jpeg"])
@@ -40,38 +52,21 @@ uploaded_file = st.file_uploader("이미지 업로드", type=["png", "jpg", "jpe
 if uploaded_file:
     image = Image.open(uploaded_file)
 
-    # 리사이즈
     image.thumbnail((1024, 1024), Image.LANCZOS)
     st.image(image, caption="최적화된 이미지")
 
-    # base64 변환
     buffer = io.BytesIO()
     image.save(buffer, format="JPEG", quality=85)
     img_b64 = base64.b64encode(buffer.getvalue()).decode()
 
-    person_type = st.selectbox(
-    "👤 인물",
-    ["없음", "성인 여성", "성인 남성", "아이"]
-    )
-
-    background = st.selectbox(
-    "🌍 배경",
-    ["실내", "야외", "봄", "여름", "가을", "겨울", "낮", "밤"]
-    )
-
-    mood = st.selectbox(
-    "🎭 분위기",
-    ["자연광", "시네마틱", "부드러운", "강한 대비", "몽환적"]
-    )
-    
     # ========================================================
-    # 🎨 스타일 선택
+    # 선택 옵션
     # ========================================================
-    style_mode = st.radio(
-        "🎨 스타일",
-        ["애니", "반실사", "실사", "초고화질"],
-        horizontal=True
-    )
+    person_type = st.selectbox("👤 인물", ["없음", "성인 여성", "성인 남성", "아이"])
+    background = st.selectbox("🌍 배경", ["실내", "야외", "봄", "여름", "가을", "겨울", "낮", "밤"])
+    mood = st.selectbox("🎭 분위기", ["자연광", "시네마틱", "부드러운", "강한 대비", "몽환적"])
+
+    style_mode = st.radio("🎨 스타일", ["애니", "반실사", "실사", "초고화질"], horizontal=True)
 
     if style_mode == "애니":
         style_prompt = "anime style, clean lineart, vibrant colors"
@@ -82,7 +77,9 @@ if uploaded_file:
     else:
         style_prompt = "ultra realistic 8k RAW, skin detail"
 
-    # 🔥 고품질 프롬프트 지시문
+    # ========================================================
+    # 프롬프트
+    # ========================================================
     base_prompt = f"""
 Analyze this image in detail and create a high-quality Stable Diffusion (SDXL) prompt.
 
@@ -90,17 +87,88 @@ Context:
 - Person: {person_type}
 - Background: {background}
 - Mood: {mood}
-
-Focus on:
-- subject and appearance
-- pose and composition
-- lighting and shadows
-- camera angle and lens
-- textures and materials
-- background and environment
+- Style: {style_prompt}
 
 Return ONLY in this format:
 
+Positive Prompt:
+...
+
+Negative Prompt:
+...
+"""
+
+    # ========================================================
+    # 실행
+    # ========================================================
+    if st.button("🔥 생성"):
+        with st.spinner("분석 중..."):
+
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+
+            payload = {
+                "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": base_prompt},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{img_b64}"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+
+            try:
+                res = requests.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers=headers,
+                    json=payload,
+                    timeout=90
+                )
+
+                result = res.json()
+
+                if "choices" in result:
+                    output_text = result["choices"][0]["message"]["content"]
+
+                    # ====================================================
+                    # 프롬프트 분리
+                    # ====================================================
+                    pos, neg = "", ""
+
+                    if "Positive Prompt:" in output_text:
+                        pos = output_text.split("Positive Prompt:")[1].split("Negative Prompt:")[0].strip()
+
+                    if "Negative Prompt:" in output_text:
+                        neg = output_text.split("Negative Prompt:")[1].strip()
+
+                    # ====================================================
+                    # 출력 UI
+                    # ====================================================
+                    st.subheader("✅ Positive Prompt")
+                    st.code(pos)
+                    copy_button(pos, "Positive 복사")
+
+                    st.subheader("🚫 Negative Prompt")
+                    st.code(neg)
+                    copy_button(neg, "Negative 복사")
+
+                    st.download_button("📋 전체 다운로드", output_text, "prompt.txt")
+
+                else:
+                    st.error(result)
+
+            except Exception as e:
+                st.error(f"에러: {e}")
 Positive Prompt:
 ...
 

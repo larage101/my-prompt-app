@@ -81,22 +81,22 @@ if uploaded_file:
     # 프롬프트
     # ========================================================
     base_prompt = f"""
-Analyze this image in detail and create a high-quality Stable Diffusion (SDXL) prompt.
+    Analyze this image in detail and create a high-quality Stable Diffusion (SDXL) prompt.
 
-Context:
-- Person: {person_type}
-- Background: {background}
-- Mood: {mood}
-- Style: {style_prompt}
+    Context:
+    - Person: {person_type}
+    - Background: {background}
+    - Mood: {mood}
+    - Style: {style_prompt}
 
-Return ONLY in this format:
+    Return ONLY in this format:
 
-Positive Prompt:
-...
+    Positive Prompt:
+    ...
 
-Negative Prompt:
-...
-"""
+    Negative Prompt:
+    ...
+    """
 
     # ========================================================
     # 실행

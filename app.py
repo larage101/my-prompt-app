@@ -38,7 +38,7 @@ if not api_key:
 model_option = st.selectbox(
     "🤖 모델 선택",
     [
-        "llava-hf/llava-1.5-7b-hf (가성비)",
+        "qwen/qwen2.5-vl-7b-instruct (가성비)",
         "qwen/qwen-vl-chat (고성능)",
         "openai/gpt-4o-mini (텍스트)"
     ]
